@@ -1,13 +1,11 @@
 import cv2
 import numpy
 
-
-#initial function for the callin of the trackbar
 def hello(x):
 	#only for referece
 	print("")
 
-#initialisation of the camera
+#Camera Initialisation 
 cap = cv2.VideoCapture(0)
 bars = cv2.namedWindow("bars")
 
@@ -18,20 +16,20 @@ cv2.createTrackbar("lower_hue","bars",68,180, hello)
 cv2.createTrackbar("lower_saturation","bars",55, 255, hello)
 cv2.createTrackbar("lower_value","bars",54, 255, hello)
 
-#Capturing the initial frame for creation of background
+#Initial Frame Capture for background
 while(True):
 	cv2.waitKey(1000)
 	ret,init_frame = cap.read()
-	#check if the frame is returned then brake
+	#if frame returned -- brake
 	if(ret):
 		break
 
-# Start capturing the frames for actual magic!!
+# Main loop to capture frames and apply the invisibility cloak effect
 while(True):
 	ret,frame = cap.read()
 	inspect = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-	#getting the HSV values for masking the cloak
+	#Get HSV For masking
 	upper_hue = cv2.getTrackbarPos("upper_hue", "bars")
 	upper_saturation = cv2.getTrackbarPos("upper_saturation", "bars")
 	upper_value = cv2.getTrackbarPos("upper_value", "bars")
@@ -39,18 +37,18 @@ while(True):
 	lower_hue = cv2.getTrackbarPos("lower_hue","bars")
 	lower_saturation = cv2.getTrackbarPos("lower_saturation","bars")
 
-	#Kernel to be used for dilation
+	#Kernel used for dilation
 	kernel = numpy.ones((3,3),numpy.uint8)
-
 	upper_hsv = numpy.array([upper_hue,upper_saturation,upper_value])
 	lower_hsv = numpy.array([lower_hue,lower_saturation,lower_value])
-
+	
+       # Create a mask for the defined HSV range
 	mask = cv2.inRange(inspect, lower_hsv, upper_hsv)
 	mask = cv2.medianBlur(mask,3)
 	mask_inv = 255-mask 
 	mask = cv2.dilate(mask,kernel,5)
 	
-	#The mixing of frames in a combination to achieve the required frame
+	#Mixing Frame Combination for required frame
 	b = frame[:,:,0]
 	g = frame[:,:,1]
 	r = frame[:,:,2]
@@ -58,7 +56,8 @@ while(True):
 	g = cv2.bitwise_and(mask_inv, g)
 	r = cv2.bitwise_and(mask_inv, r)
 	frame_inv = cv2.merge((b,g,r))
-
+	
+        # Separate the initial frame into RGB channels and apply the mask
 	b = init_frame[:,:,0]
 	g = init_frame[:,:,1]
 	r = init_frame[:,:,2]
@@ -66,11 +65,14 @@ while(True):
 	g = cv2.bitwise_and(g,mask)
 	r = cv2.bitwise_and(r,mask)
 	blanket_area = cv2.merge((b,g,r))
-
+	
+       # Combine the frames to get the final output
 	final = cv2.bitwise_or(frame_inv, blanket_area)
-
-	cv2.imshow("Harry's Cloak",final)
-
+	
+        # Display the final output
+	cv2.imshow("Cloack",final)
+	
+       # Exit the loop when 'q' is pressed
 	if(cv2.waitKey(3) == ord('q')):
 		break;
 
